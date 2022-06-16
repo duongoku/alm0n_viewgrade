@@ -85,14 +85,15 @@ class Utility(commands.Cog):
 
         course = viewgrade.get_course(course_id)
 
+        # Filter out courses with no grade
+        course = dict((k, v) for k, v in course.items() if v['extracted'] > 0)
+
         s = ""
 
         if course is None:
             s = "Couldn't find anything related to the course <:cheems:721790695928758302>"
             await ctx.send(s)
             return
-
-        print(course)
 
         for lecturer in course:
             ltr = course[lecturer]
