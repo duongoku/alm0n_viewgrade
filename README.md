@@ -14,6 +14,7 @@ alm0n for UET's viewgrade
 ## Prerequisites
 
 -   [Python 3.10+](https://www.python.org/downloads/release/python-3100/)
+-   [poppler](https://poppler.freedesktop.org/) for [pdf2image](https://pypi.org/project/pdf2image/)
 -   A Google Cloud Vision credential file (see [this guide](https://cloud.google.com/vision/docs/auth))
 -   A [viewgrade](http://112.137.129.30/viewgrade/) account
 
