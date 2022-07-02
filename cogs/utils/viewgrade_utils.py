@@ -227,6 +227,9 @@ def strip_to_numeric(txt):
 
 
 def extract_score(filepaths):
+    lecturer = 'Unreadable Name'
+    course = 'Unreadable Course Name'
+
     midterm_mul = 0.3
     final_mul = 1 - midterm_mul
 
