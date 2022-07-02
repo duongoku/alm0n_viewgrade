@@ -144,10 +144,16 @@ def get_file(url, filepath):
 def get_lecturer_and_course(filepath):
     lecturer = ''
     course = ''
+    begin_check = False
 
     lines = get_lines(filepath)
 
     for line in lines:
+        if line.upper() == 'BẢNG ĐIỂM ĐÁNH GIÁ MÔN HỌC\n':
+            begin_check = True
+            continue
+        if not begin_check:
+            continue
         if line == line.upper():
             continue
         elif '.' in line or ':' in line:
@@ -156,27 +162,31 @@ def get_lecturer_and_course(filepath):
             continue
         else:
             temp = line.split(' ')
-            check = True
-            print(line)
+            lecturer_check = True
+            course_check = ''.join(temp)
+            if course_check[0].isupper() and course_check[1:].islower():
+                course = line
             for c in temp:
                 if len(c) == 0:
                     continue
                 if c[0].islower() or c.isupper():
-                    check = False
+                    lecturer_check = False
                     break
-            if check and len(lecturer) == 0:
+            if lecturer_check and len(lecturer) == 0:
                 lecturer = line
-                continue
-            elif not check and len(course) == 0:
-                course = line
                 continue
             if len(lecturer) > 0 and len(course) > 0:
                 break
-            
+
     if lecturer[-1] == '\n':
         lecturer = lecturer[:-1]
     if course[-1] == '\n':
         course = course[:-1]
+
+    if lecturer == '' or len(lecturer.split(' ')) < 2:
+        lecturer = 'Unreadable Name'
+    if course == '' or len(course.split(' ')) < 2:
+        course = 'Unreadable Course Name'
 
     return (lecturer, course)
 
@@ -219,8 +229,6 @@ def strip_to_numeric(txt):
 def extract_score(filepaths):
     midterm_mul = 0.3
     final_mul = 1 - midterm_mul
-    lecturer = 'Unreadable Name'
-    course = 'Unreadable Course Name'
 
     scores = []
 
@@ -346,7 +354,7 @@ if __name__ == '__main__':
     # txt = get_text(f'{temp_dir}/page990.jpg', True)
     # print(txt)
 
-    (lecturer, course, result, extracted, total) = extract_score([f'{temp_dir}/page00.jpg', f'{temp_dir}/page01.jpg'])
+    (lecturer, course, result, extracted, total) = extract_score([f'{temp_dir}/page50.jpg', f'{temp_dir}/page51.jpg'])
     print(
         f"Lecturer: {lecturer}\nCourse: {course}\n"\
         f"{result}\n"\

@@ -130,10 +130,7 @@ def get_cached_result(course_id: str):
     if os.path.exists(cache_file):
         with open(cache_file, "r") as f:
             cache = json.load(f)
-        if (
-            cache["course_id"] == course_id
-            and os.path.getmtime(cache_file) > time.time() - 24 * 60 * 60
-        ):
+        if (os.path.getmtime(cache_file) > time.time() - 24 * 60 * 60):
             return cache
     return None
 
