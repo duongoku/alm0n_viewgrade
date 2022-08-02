@@ -136,6 +136,9 @@ def get_cached_result(course_id: str):
 
 
 def cache_result(course_id: str, result):
+    # Check if result is empty
+    if len(result.keys()) == 0:
+        return
     course_id = course_id.lower()
     cache_dir = os.getenv("CACHEDIR")
     cache_file = f"{cache_dir}/{course_id}.json"
