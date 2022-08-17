@@ -1,1 +1,1 @@
-venv\Scripts\activate & & py bot.py
+venv\Scripts\activate && py bot.py
