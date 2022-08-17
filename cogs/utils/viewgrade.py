@@ -61,12 +61,14 @@ def get_classes(course_id, edu_type=0, term_id_max=100):
         for i in range(term_id_max + 1):
             data["idterm"] = term_id_max - i
 
-            res = requests.request(method="POST", url=url, data=data, cookies=cookies)
+            res = requests.request(
+                method="POST", url=url, data=data, cookies=cookies)
 
             if res.text == "-1":
                 continue
 
-            json_text = res.text.replace("\\/", "/").encode().decode("unicode_escape")
+            json_text = res.text.replace(
+                "\\/", "/").encode().decode("unicode_escape")
 
             json_obj = json.loads(json_text)
 
@@ -211,7 +213,8 @@ def get_course(course_id, edu_type=0, term_id_max=100):
     grouped_filepaths.append(current)
 
     for filepaths in grouped_filepaths:
-        thread = threading.Thread(target=get_scores, args=(filepaths,), daemon=True)
+        thread = threading.Thread(
+            target=get_scores, args=(filepaths,), daemon=True)
         threads.append(thread)
     for thread in threads:
         thread.start()
@@ -301,7 +304,8 @@ def make_plot(course):
     bars_labels = []
 
     for t in grade_types:
-        bars.append(ax.barh(labels, grade_list[t], height=0.5, left=left[t], label=t))
+        bars.append(
+            ax.barh(labels, grade_list[t], height=0.5, left=left[t], label=t))
         bl = []
         for i in range(len(labels)):
             if grade_list[t][i] < 5:

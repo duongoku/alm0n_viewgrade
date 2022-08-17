@@ -10,6 +10,7 @@ import os
 import re
 import requests
 
+
 def clear_temporary():
     temp_dir = os.getenv('TEMPDIR')
     files = os.listdir('temp')
@@ -26,6 +27,7 @@ def minimum_x(text_annotation):
             min_y = vertex.y
     return min_y
 
+
 def minimum_y(text_annotation):
     vertices = text_annotation.bounding_poly.vertices
     min_x = vertices[0].x
@@ -34,10 +36,12 @@ def minimum_y(text_annotation):
             min_x = vertex.x
     return min_x
 
+
 def sort_key(text_annotation):
     min_x = minimum_x(text_annotation)
     min_y = minimum_y(text_annotation)
     return (min_x, min_y)
+
 
 def get_text(filepath, crop):
     credentials = service_account.Credentials.from_service_account_file(
@@ -91,6 +95,8 @@ def get_text(filepath, crop):
     return text
 
 # This function is from this stackoverflow answer: https://stackoverflow.com/questions/57964634/python-opencv-skew-correction-for-ocr
+
+
 def correct_skew(image, delta=1, limit=10):
     # Convert PIL image into cv2 image
     image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
@@ -102,7 +108,8 @@ def correct_skew(image, delta=1, limit=10):
         return histogram, score
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1] 
+    thresh = cv2.threshold(
+        gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
 
     scores = []
     angles = np.arange(-limit, limit + delta, delta)
@@ -115,8 +122,8 @@ def correct_skew(image, delta=1, limit=10):
     (h, w) = image.shape[:2]
     center = (w // 2, h // 2)
     M = cv2.getRotationMatrix2D(center, best_angle, 1.0)
-    corrected = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, \
-            borderMode=cv2.BORDER_REPLICATE)
+    corrected = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC,
+                               borderMode=cv2.BORDER_REPLICATE)
 
     return corrected
 
@@ -141,42 +148,46 @@ def get_file(url, filepath):
     return True
 
 
+def remove_lines_with_numbers(lines):
+    return list(filter(lambda x: not re.search(r'\d', x), lines))
+
+
+def remove_lines_with_colons(lines):
+    return list(filter(lambda x: not re.search(r':', x), lines))
+
+
+def remove_lines_with_skipwords(lines, skipwords_file='skipwords.txt'):
+    # Skipwords are in upper case
+    with open(skipwords_file, 'r', encoding='utf8') as f:
+        skipwords = f.readlines()
+    return list(filter(lambda x: not any(word.strip() in x.upper() for word in skipwords), lines))
+
+
 def get_lecturer_and_course(filepath):
     lecturer = ''
     course = ''
-    begin_check = False
 
     lines = get_lines(filepath)
+    lines = remove_lines_with_numbers(lines)
+    lines = remove_lines_with_skipwords(lines)
 
     for line in lines:
-        if line.upper() == 'BẢNG ĐIỂM ĐÁNH GIÁ MÔN HỌC\n':
-            begin_check = True
-            continue
-        if not begin_check:
-            continue
-        if line == line.upper():
-            continue
-        elif '.' in line or ':' in line:
-            continue
-        elif any(c.isdigit() for c in line):
-            continue
-        else:
-            temp = line.split(' ')
-            lecturer_check = True
-            course_check = ''.join(temp)
-            if course_check[0].isupper() and course_check[1:].islower():
-                course = line
-            for c in temp:
-                if len(c) == 0:
-                    continue
-                if c[0].islower() or c.isupper():
-                    lecturer_check = False
-                    break
-            if lecturer_check and len(lecturer) == 0:
-                lecturer = line
+        temp = line.split(' ')
+        lecturer_check = True
+        course_check = ''.join(temp)
+        if course_check[0].isupper() and course_check[1:].islower():
+            course = line
+        for c in temp:
+            if len(c) == 0:
                 continue
-            if len(lecturer) > 0 and len(course) > 0:
+            if c[0].islower() or c.isupper():
+                lecturer_check = False
                 break
+        if lecturer_check and len(lecturer) == 0:
+            lecturer = line
+            continue
+        if len(lecturer) > 0 and len(course) > 0:
+            break
 
     if lecturer[-1] == '\n':
         lecturer = lecturer[:-1]
@@ -269,8 +280,8 @@ def extract_score(filepaths):
         total += len(lines)
 
         # Ignore the first two lines (midterm and final coefficients)
-        if len(lines)>2:
-            if len(lines)%3 != 0 and lines[0] + lines[1] == 1:
+        if len(lines) > 2:
+            if len(lines) % 3 != 0 and lines[0] + lines[1] == 1:
                 i = 2
                 total -= 2
         # print(f"Total: {total}")
@@ -357,10 +368,13 @@ if __name__ == '__main__':
     # txt = get_text(f'{temp_dir}/page990.jpg', True)
     # print(txt)
 
-    (lecturer, course, result, extracted, total) = extract_score([f'{temp_dir}/page50.jpg', f'{temp_dir}/page51.jpg'])
+    # print(get_lecturer_and_course(f'{temp_dir}/text_page00.txt'))
+
+    (lecturer, course, result, extracted, total) = extract_score(
+        [f'{temp_dir}/page00.jpg'])
     print(
-        f"Lecturer: {lecturer}\nCourse: {course}\n"\
-        f"{result}\n"\
-        f"Extracted={extracted}\nTotal~{total}\n"\
+        f"Lecturer: {lecturer}\nCourse: {course}\n"
+        f"{result}\n"
+        f"Extracted={extracted}\nTotal~{total}\n"
         f"Coverage={round(extracted/(total)*100, 2)}%"
     )
