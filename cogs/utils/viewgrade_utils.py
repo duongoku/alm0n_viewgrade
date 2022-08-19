@@ -171,28 +171,14 @@ def get_lecturer_and_course(filepath):
     lines = remove_lines_with_numbers(lines)
     lines = remove_lines_with_skipwords(lines)
 
-    for line in lines:
-        temp = line.split(' ')
-        lecturer_check = True
-        course_check = ''.join(temp)
-        if course_check[0].isupper() and course_check[1:].islower():
-            course = line
-        for c in temp:
-            if len(c) == 0:
-                continue
-            if c[0].islower() or c.isupper():
-                lecturer_check = False
-                break
-        if lecturer_check and len(lecturer) == 0:
-            lecturer = line
-            continue
-        if len(lecturer) > 0 and len(course) > 0:
-            break
+    vn = r'[a-záàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệóòỏõọôốồổỗộơớờởỡợíìỉĩịúùủũụưứừửữựýỳỷỹỵđ ]+'
 
-    if lecturer[-1] == '\n':
-        lecturer = lecturer[:-1]
-    if course[-1] == '\n':
-        course = course[:-1]
+    for i in range(len(lines)):
+        if re.fullmatch(vn, lines[i].strip().lower()):
+            if len(lines[i].split(' ')) >= 2:
+                lecturer = lines[i].strip()
+                course = lines[i+1].strip()
+                break
 
     if lecturer == '' or len(lecturer.split(' ')) < 2:
         lecturer = 'Unreadable Name'
@@ -249,25 +235,16 @@ def extract_score(filepaths):
     temp_dir = os.getenv('TEMPDIR')
 
     get_text(filepaths[0], False)
-    lines = get_lines(
+    lecturer, course = get_lecturer_and_course(
         f'{temp_dir}/text_{filepaths[0][len(temp_dir)+1:-4]}.txt'
     )
-    lines = score_filter(lines)
-    for i in range(2, len(lines)):
-        if (lines[i-1] + lines[i-2]) == 1:
-            midterm_mul = min(lines[i-1], lines[i-2])
-            final_mul = max(lines[i-1], lines[i-2])
-            lecturer, course = get_lecturer_and_course(
-                f'{temp_dir}/text_{filepaths[0][len(temp_dir)+1:-4]}.txt'
-            )
-            break
 
     print(f"{filepaths} -> {(lecturer, midterm_mul, final_mul)}")
 
     extracted = 0
     total = 0
 
-    # return (lecturer, scores, extracted, total)
+    # return (1, 1, 1, 1, 1)
 
     for filepath in filepaths:
         get_text(filepath, True)
