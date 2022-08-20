@@ -43,7 +43,7 @@ def sort_key(text_annotation):
     return (min_x, min_y)
 
 
-def get_text(filepath, crop):
+def get_text(filepath, cropmode):
     credentials = service_account.Credentials.from_service_account_file(
         os.getenv('VISION_CREDENTIALS')
     )
@@ -55,17 +55,20 @@ def get_text(filepath, crop):
     temppath = f'{temp_dir}/temp_{filepath[len(temp_dir)+1:-4]}.jpg'
     content = None
 
-    if crop:
+    if cropmode == 'score':
         image = Image.open(filepath)
         (width, height) = image.size
         image = image.crop((7*width/10, 0, width, height))
         image.save(temppath)
-    else:
+    elif cropmode == 'info':
+        image = Image.open(filepath)
+        (width, height) = image.size
+        image = image.crop((0, 0, width, 3*height/10))
+        image.save(temppath)
+    elif cropmode == 'all':
         temppath = filepath
-        # image = Image.open(filepath)
-        # (width, height) = image.size
-        # image = image.crop((0, 0, width, height/2))
-        # image.save(temppath)
+    else:
+        return None
 
     with open(temppath, 'rb') as image_file:
         content = image_file.read()
@@ -78,7 +81,7 @@ def get_text(filepath, crop):
 
     # If crop is true (meaning only need to get scores),
     # we need to sort the repsonses by their x and y coordinates
-    if crop:
+    if cropmode == 'score':
         tmp = response.text_annotations[1:]
         tmp.sort(key=sort_key)
         text = '\n'.join(list(map(lambda x: x.description, tmp)))
@@ -176,9 +179,10 @@ def get_lecturer_and_course(filepath):
     for i in range(len(lines)):
         if re.fullmatch(vn, lines[i].strip().lower()):
             if len(lines[i].split(' ')) >= 2:
-                lecturer = lines[i].strip()
-                course = lines[i+1].strip()
-                break
+                if not lines[i].isupper():
+                    lecturer = lines[i].strip()
+                    course = lines[i+1].strip()
+                    break
 
     if lecturer == '' or len(lecturer.split(' ')) < 2:
         lecturer = 'Unreadable Name'
@@ -234,10 +238,27 @@ def extract_score(filepaths):
 
     temp_dir = os.getenv('TEMPDIR')
 
-    get_text(filepaths[0], False)
+    get_text(filepaths[0], 'info')
     lecturer, course = get_lecturer_and_course(
         f'{temp_dir}/text_{filepaths[0][len(temp_dir)+1:-4]}.txt'
     )
+
+    # return (1, 1, 1, 1, 1)
+
+    # Get score multiplier
+    get_text(filepaths[0], 'score')
+    lines = get_lines(
+        f'{temp_dir}/text_{filepaths[0][len(temp_dir)+1:-4]}.txt'
+    )
+    lines = score_filter(lines)
+    if len(lines) > 2:
+        i = 0
+        while i+1 < len(lines):
+            if lines[i] + lines[i+1] == 1:
+                midterm_mul = lines[i]
+                final_mul = lines[i+1]
+                break
+            i += 1
 
     print(f"{filepaths} -> {(lecturer, midterm_mul, final_mul)}")
 
@@ -247,7 +268,11 @@ def extract_score(filepaths):
     # return (1, 1, 1, 1, 1)
 
     for filepath in filepaths:
-        get_text(filepath, True)
+        # Check if filepath is the first file in the list
+        # If so then we don't need to get the text again
+        if filepath != filepaths[0]:
+            get_text(filepath, 'score')
+        
         lines = get_lines(
             f'{temp_dir}/text_{filepath[len(temp_dir)+1:-4]}.txt'
         )
@@ -342,13 +367,13 @@ if __name__ == '__main__':
     # print(lmao)
 
     # make_images(f'{temp_dir}/6.pdf', 99)
-    # txt = get_text(f'{temp_dir}/page990.jpg', True)
+    # txt = get_text(f'{temp_dir}/page990.jpg', 'score')
     # print(txt)
 
     # print(get_lecturer_and_course(f'{temp_dir}/text_page00.txt'))
 
     (lecturer, course, result, extracted, total) = extract_score(
-        [f'{temp_dir}/page00.jpg'])
+        [f'{temp_dir}/page50.jpg'])
     print(
         f"Lecturer: {lecturer}\nCourse: {course}\n"
         f"{result}\n"
