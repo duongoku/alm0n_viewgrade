@@ -204,7 +204,9 @@ def get_course(course_id, edu_type=0, term_id_max=100):
         current.append(f"{temp_dir}/{files[0]}")
     for i in range(1, len(files)):
         file = files[i]
-        if file[4] == current[0][5 + len(temp_dir)]:
+        a = len(file)
+        b = len(current[0]) - len(temp_dir) - 1
+        if a == b and file[4:-5] == current[0][len(temp_dir)+5:-5]:
             current.append(f"{temp_dir}/{file}")
         else:
             if len(current) > 0:
