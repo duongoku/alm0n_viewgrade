@@ -4,11 +4,12 @@ alm0n for UET's viewgrade
 
 ## Table of Contents
 
-- [alm0n_viewgrade](#alm0n_viewgrade)
+- [alm0n\_viewgrade](#alm0n_viewgrade)
   - [Table of Contents](#table-of-contents)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Usage](#usage)
+  - [Preview](#preview)
   - [Disclaimer](#disclaimer)
 
 ## Prerequisites
@@ -49,6 +50,10 @@ python bot.py
 
 -   Invite the bot to your server, an invitation url will be shown in the console after the bot is started
 -   Chat `~help` (if you didn't change the command prefix) to see the list of commands
+
+## Preview
+
+![preview](/preview/demo.png)
 
 ## Disclaimer
 
