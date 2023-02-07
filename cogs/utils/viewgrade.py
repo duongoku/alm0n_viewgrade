@@ -13,6 +13,11 @@ ROOT = "http://112.137.129.30/viewgrade"
 MAX_FILES = 100
 
 
+def get_json_object(text):
+    json_text = text.replace("\\/", "/").encode().decode("unicode_escape")
+    return json.loads(json_text)
+
+
 def get_session():
     username = os.getenv("VIEWGRADE_USERNAME")
     password = os.getenv("VIEWGRADE_PASSWORD")
@@ -43,7 +48,28 @@ def get_session():
     return (token, cookies)
 
 
-def get_classes(course_id, edu_type=0, term_id_max=100):
+def get_term_id_max():
+    url = f"{ROOT}/home/getListYearTerm"
+
+    (token, cookies) = get_session()
+
+    data = {
+        "_token": token,
+    }
+
+    try:
+        res = requests.request(
+            method="POST", url=url, data=data, cookies=cookies)
+
+        json_obj = get_json_object(res.text)
+
+        if isinstance(json_obj, list):
+            return int(json_obj[1])
+    except requests.RequestException as error:
+        print(error)
+
+
+def get_classes(course_id, edu_type=0):
     url = f"{ROOT}/home/getSearchWithTerm"
 
     (token, cookies) = get_session()
@@ -58,6 +84,8 @@ def get_classes(course_id, edu_type=0, term_id_max=100):
     rt = []
 
     try:
+        term_id_max = get_term_id_max()
+
         for i in range(term_id_max + 1):
             data["idterm"] = term_id_max - i
 
@@ -67,10 +95,7 @@ def get_classes(course_id, edu_type=0, term_id_max=100):
             if res.text == "-1":
                 continue
 
-            json_text = res.text.replace(
-                "\\/", "/").encode().decode("unicode_escape")
-
-            json_obj = json.loads(json_text)
+            json_obj = get_json_object(res.text)
 
             if isinstance(json_obj, list):
                 rt.extend(json_obj[0])
@@ -80,8 +105,8 @@ def get_classes(course_id, edu_type=0, term_id_max=100):
     return rt
 
 
-def get_grade_files(course_id, edu_type=0, term_id_max=100):
-    classes = get_classes(course_id, edu_type, term_id_max)
+def get_grade_files(course_id, edu_type=0):
+    classes = get_classes(course_id, edu_type)
     rt = []
 
     for cl in classes:
@@ -106,8 +131,8 @@ def get_terms():
     if res.status_code != 200:
         return []
 
-    json_text = res.text.replace("\\/", "/").encode().decode("unicode_escape")
-    json_obj = json.loads(json_text)
+    json_obj = get_json_object(res.text)
+
     return json_obj
 
 
@@ -149,7 +174,7 @@ def cache_result(course_id: str, result):
 
 
 # edu_type = 0 for undergraduate and 1 for postgraduate
-def get_course(course_id, edu_type=0, term_id_max=100):
+def get_course(course_id, edu_type=0):
     # clean temporary folder
     viewgrade_utils.clear_temporary()
 
@@ -161,7 +186,7 @@ def get_course(course_id, edu_type=0, term_id_max=100):
     temp_dir = os.getenv("TEMPDIR")
 
     # get files from viewgrade
-    files = get_grade_files(course_id, edu_type, term_id_max)
+    files = get_grade_files(course_id, edu_type)
     threads = []
     if len(files) > MAX_FILES:
         files = files[0:MAX_FILES]
